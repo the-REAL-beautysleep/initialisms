@@ -101,9 +101,9 @@ class Decoder(object):
             self.swap(ch, curr_index, i)
 
     # Regex to find sequence of words w/ first letters matching initials
-    def createRegex(self, initials):
+    def createSentenceRegex(self, initials):
 
-        seperator = "[\\s:;,–]*"
+        seperator = "[\\s:;,–-]*"
         rest_of_word = "[a-zA-Z0-9]+"
         customer_regex = ""
         for letter in initials:
@@ -114,6 +114,43 @@ class Decoder(object):
 
         return re.compile(customer_regex, re.IGNORECASE)
 
+    # creates sentence regex from Initials
+    # searches corpas and appends results to results_list
+    def appendSentencesFound(self, initials):
+        try:
+            regex = self.createSentenceRegex(initials)
+            self.results_list.append(regex.findall(self.corpus))
+
+        except Exception as ex:
+            print("error", ex)
+
+    # Regex to find a whole word mathcing initials sequence
+    def createWordRegex(self, initials):
+
+        seperator = "['.]?"
+        customer_regex = "\\b"
+        end = "[\\s.,]"
+        for letter in initials:
+            temp_regex = letter + seperator
+            customer_regex += temp_regex
+        customer_regex = customer_regex[:-len(seperator)]
+        customer_regex += end
+
+        # print("createWordRegex", customer_regex)
+
+        return re.compile(customer_regex, re.IGNORECASE)
+
+    # creates word regex from Initials
+    # searches corpas and appends results to results_list
+    def appendWordsFound(self, initials):
+        try:
+            regex = self.createWordRegex(initials)
+            print(regex)
+            self.results_list.append(regex.findall(self.corpus))
+
+        except Exception as ex:
+            print("error", ex)
+
     # flattens array
     # drops all empty elements
     # removes duplicates
@@ -122,20 +159,11 @@ class Decoder(object):
         self.results_list = [x for x in self.results_list if x]
         self.results_list = list(dict.fromkeys(self.results_list))
 
-    # creates regex from Initials
-    # searches corpas and appends results to results_list
-    def createFindAppend(self, initials):
-        try:
-            regex = self.createRegex(initials)   
-            self.results_list.append(regex.findall(self.corpus))
-
-        except Exception as ex:
-            print("error", ex)
-
     def groupedCreateFindAppend(self, group_of_intials_permutations):
         try:
             for i in group_of_intials_permutations:
-                self.createFindAppend(i)
+                self.appendWordsFound(i)
+                self.appendSentencesFound(i)
         except Exception as ex:
             print("error", ex)
 
@@ -152,8 +180,10 @@ class Decoder(object):
             # futures = [executor.submit(self.createFindAppend, permutation) for permutation in all_permutations_of_initials]
             # concurrent.futures.wait(futures)
         else:
-            self.createFindAppend(initials)
-
+            self.appendWordsFound(initials)
+            print(self.results_list)
+            self.appendSentencesFound(initials)
+            print(self.results_list)
         self.tidyResultsList()
 
         logger.info('Decoding %r took %s s', initials, timer.elapsed())

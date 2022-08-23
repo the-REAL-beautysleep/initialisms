@@ -7,7 +7,7 @@ Deploy to eb         `eb deploy`
 
 
 
-- [ ] set up on https
+- [x] set up on https
 - [ ] There should be a test suite
 - [x] words.txt should be far far larger
 - [ ] refactor code to be shorter and easier to ready
